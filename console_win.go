@@ -129,25 +129,34 @@ const (
 // with the current process.  The Screen makes use of the Windows Console
 // API to display content and read events.
 func NewConsoleScreen() (Screen, error) {
-	return &cScreen{}, nil
+	var s cScreen
+
+	// If there isn't an open console, this is just going to be broken
+	// Open the console first if that's what you want; then we can attach to it
+	if !Windows_HasOpenConsole() {
+		return nil, errors.New("can't attach to nonexistent console screen")
+	}
+
+	// See if we're going to be able to create the console screen
+	in, e := syscall.Open("CONIN$", syscall.O_RDWR, 0)
+	if e != nil {
+		return nil, e
+	}
+	s.in = in
+	out, e := syscall.Open("CONOUT$", syscall.O_RDWR, 0)
+	if e != nil {
+		syscall.Close(s.in)
+		return nil, e
+	}
+	s.out = out
+
+	return &s, nil
 }
 
 func (s *cScreen) Init() error {
 	s.evch = make(chan Event, 10)
 	s.quit = make(chan struct{})
 	s.scandone = make(chan struct{})
-
-	in, e := syscall.Open("CONIN$", syscall.O_RDWR, 0)
-	if e != nil {
-		return e
-	}
-	s.in = in
-	out, e := syscall.Open("CONOUT$", syscall.O_RDWR, 0)
-	if e != nil {
-		syscall.Close(s.in)
-		return e
-	}
-	s.out = out
 
 	cf, _, e := procCreateEvent.Call(
 		uintptr(0),
