@@ -17,7 +17,7 @@ package views
 import (
 	"sync"
 
-	"github.com/gdamore/tcell"
+	"github.com/ngrok/tcell"
 )
 
 // Application represents an event-driven application running on a screen.
