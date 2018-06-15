@@ -17,11 +17,12 @@
 package tcell
 
 import (
+	"errors"
+	"os"
 	"sync"
 	"syscall"
 	"unicode/utf16"
 	"unsafe"
-	"errors"
 )
 
 type cScreen struct {
@@ -114,6 +115,9 @@ var (
 	procSetConsoleWindowInfo       = k32.NewProc("SetConsoleWindowInfo")
 	procSetConsoleScreenBufferSize = k32.NewProc("SetConsoleScreenBufferSize")
 	procSetConsoleTextAttribute    = k32.NewProc("SetConsoleTextAttribute")
+	procGetConsoleWindow           = k32.NewProc("GetConsoleWindow")
+	procFreeConsole                = k32.NewProc("FreeConsole")
+	procAllocConsole               = k32.NewProc("AllocConsole")
 )
 
 const (
@@ -1029,4 +1033,34 @@ func (s *cScreen) HasKey(k Key) bool {
 	}
 
 	return valid[k]
+}
+
+// ConsoleEnsureOpen makes sure we have an open console window,
+// for users who want to be 100% sure they're going to get a console window.
+// Users who might prefer to get no console window (because stdio is redirected)
+// should not call this.
+func Windows_EnsureOpenConsole() {
+	if !Windows_HasOpenConsole() {
+		syscall.Syscall(procFreeConsole.Addr(), 0, 0, 0, 0)
+		syscall.Syscall(procAllocConsole.Addr(), 0, 0, 0, 0)
+	}
+}
+
+// Windows_HasOpenConsole returns whether the process has a console window allocated
+func Windows_HasOpenConsole() bool {
+	hwnd, _, _ := procGetConsoleWindow.Call()
+	return hwnd != 0
+}
+
+// ConsoleIsOnMSYSTTY returns whether stdout is connected to an MSYS/CYGWIN TTY
+func Windows_IsOnMSYSTTY() bool {
+	return GetMSYSTerminal(os.Stdout) != -1
+}
+
+// ConsoleIsOnConsole returns whether stdout is connected to a windows console
+func Windows_IsOnConsole() bool {
+	var st uint32
+	fd := os.Stdout.Fd()
+	r, _, e := syscall.Syscall(procGetConsoleMode.Addr(), 2, fd, uintptr(unsafe.Pointer(&st)), 0)
+	return r != 0 && e == 0
 }

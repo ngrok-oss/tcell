@@ -21,3 +21,22 @@ package tcell
 func NewConsoleScreen() (Screen, error) {
 	return nil, ErrNoScreen
 }
+
+// This function is intended for windows
+func Windows_EnsureOpenConsole() {
+}
+
+// This function is intended for windows
+func Windows_HasOpenConsole() bool {
+	return false
+}
+
+// This function is intended for windows
+func Windows_IsOnMSYSTTY() bool {
+	return false
+}
+
+// This function is intended for windows
+func Windows_IsOnConsole() bool {
+	return false
+}
