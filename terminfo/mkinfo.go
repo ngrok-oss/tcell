@@ -49,7 +49,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gdamore/tcell/terminfo"
+	"github.com/ngrok/tcell/terminfo"
 )
 
 type termcap struct {
