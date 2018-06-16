@@ -912,7 +912,6 @@ func (s *cScreen) Fill(r rune, style Style) {
 	s.Lock()
 	if !s.fini {
 		s.cells.Fill(r, style)
-		s.clear = true
 	}
 	s.Unlock()
 }
