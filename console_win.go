@@ -26,17 +26,17 @@ import (
 )
 
 type cScreen struct {
-	in    syscall.Handle
-	out   syscall.Handle
+	in         syscall.Handle
+	out        syscall.Handle
 	cancelflag syscall.Handle
-	scandone chan struct{}
-	evch  chan Event
-	quit  chan struct{}
-	curx  int
-	cury  int
-	style Style
-	clear bool
-	fini  bool
+	scandone   chan struct{}
+	evch       chan Event
+	quit       chan struct{}
+	curx       int
+	cury       int
+	style      Style
+	clear      bool
+	fini       bool
 
 	w int
 	h int
@@ -101,8 +101,10 @@ var k32 = syscall.NewLazyDLL("kernel32.dll")
 // without this suffix, as the resolution is made via preprocessor.
 var (
 	procReadConsoleInput           = k32.NewProc("ReadConsoleInputW")
+	procReadConsole                = k32.NewProc("ReadConsoleW")
 	procWaitForMultipleObjects     = k32.NewProc("WaitForMultipleObjects")
 	procCreateEvent                = k32.NewProc("CreateEventW")
+	procCloseHandle                = k32.NewProc("CloseHandle")
 	procSetEvent                   = k32.NewProc("SetEvent")
 	procGetConsoleCursorInfo       = k32.NewProc("GetConsoleCursorInfo")
 	procSetConsoleCursorInfo       = k32.NewProc("SetConsoleCursorInfo")
@@ -121,7 +123,7 @@ var (
 )
 
 const (
-	w32Infinite = ^uintptr(0)
+	w32Infinite    = ^uintptr(0)
 	w32WaitObject0 = uintptr(0)
 )
 
@@ -543,7 +545,7 @@ func (s *cScreen) getConsoleInput() error {
 		uintptr(pWaitObjects),
 		uintptr(0),
 		w32Infinite)
-	// WaitForMultipleObjects returns WAIT_OBJECT_0 + the index. 
+	// WaitForMultipleObjects returns WAIT_OBJECT_0 + the index.
 	switch rv {
 	case w32WaitObject0: // s.cancelFlag
 		return errors.New("cancelled")
